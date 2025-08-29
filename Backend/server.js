@@ -9,6 +9,7 @@ const compression = require('compression');
 
 //MongoDB connection
 const { connectDB } = require('./src/config/db');
+const { notFound, errorHandler } = require('./src/middleware/errorHandler');
 
 // Routers
 const authRoutes = require('./src/routes/authRoutes');
@@ -51,9 +52,14 @@ connectDB().catch((err) => {
   process.exit(1);
 });
 
+
 // ---- Routes ----
 // NOTE: All protected endpoints apply Auth0 JWT check inside route files.
 app.use('/api/auth', authRoutes);
+
+// ---- 404 & error handling ----
+app.use(notFound);     // Catch unmatched routes
+app.use(errorHandler);    // // Handle any thrown errors
 
 // Start server
 const PORT = process.env.PORT || 4000;
