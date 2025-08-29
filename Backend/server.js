@@ -15,6 +15,7 @@ const { notFound, errorHandler } = require('./src/middleware/errorHandler');
 const authRoutes = require('./src/routes/authRoutes');
 const productRoutes = require('./src/routes/productRoutes');
 const orderRoutes = require('./src/routes/orderRoutes');
+const userRoutes = require('./src/routes/userRoutes');
 
 const app = express();
 
@@ -60,6 +61,7 @@ connectDB().catch((err) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/users', userRoutes);
 
 // ---- 404 & error handling ----
 app.use(notFound);     // Catch unmatched routes
