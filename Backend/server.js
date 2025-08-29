@@ -13,6 +13,7 @@ const { notFound, errorHandler } = require('./src/middleware/errorHandler');
 
 // Routers
 const authRoutes = require('./src/routes/authRoutes');
+const productRoutes = require('./src/routes/productRoutes');
 
 const app = express();
 
@@ -56,6 +57,7 @@ connectDB().catch((err) => {
 // ---- Routes ----
 // NOTE: All protected endpoints apply Auth0 JWT check inside route files.
 app.use('/api/auth', authRoutes);
+app.use('/api/products', productRoutes);
 
 // ---- 404 & error handling ----
 app.use(notFound);     // Catch unmatched routes
