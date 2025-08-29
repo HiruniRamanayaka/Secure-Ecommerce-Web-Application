@@ -19,11 +19,11 @@ const userRoutes = require('./src/routes/userRoutes');
 
 const app = express();
 
-// ---- Security & hardening ----
+// ---- Security & hardening ----   -> Adds HTTP headers to protect against common attacks.
 app.use(helmet({
   crossOriginEmbedderPolicy: false, // prevent issues with fonts/images during dev
 }));
-app.use(compression());
+app.use(compression());          // Compresses responses to reduce payload size.
 app.use(express.json({ limit: '16kb' })); // small body limit
 app.use(express.urlencoded({ extended: true, limit: '16kb' }));
 
@@ -31,7 +31,7 @@ app.use(express.urlencoded({ extended: true, limit: '16kb' }));
 app.use(mongoSanitize());
 app.use(xssClean());
 
-// Strict CORS: only allow your frontend origin
+// Strict CORS: - Restricts access to requests from your frontend only.
 const allowedOrigin = process.env.FRONTEND_URL || 'https://localhost:3000';
 app.use(cors({
   origin: allowedOrigin,
@@ -40,7 +40,7 @@ app.use(cors({
   credentials: true,
 }));
 
-// Basic rate limiting (tune as needed)
+// Basic rate limiting - Limits each IP to 200 requests per 15 minutes., - Helps prevent abuse or brute-force attacks.
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 200, // 200 requests / 15 min / IP
@@ -55,6 +55,8 @@ connectDB().catch((err) => {
   process.exit(1);
 });
 
+// ---- Health check ---- -> Simple endpoint to verify the server is running.
+app.get('/api/health', (_req, res) => res.json({ ok: true, ts: Date.now() }));
 
 // ---- Routes ----
 // NOTE: All protected endpoints apply Auth0 JWT check inside route files.
