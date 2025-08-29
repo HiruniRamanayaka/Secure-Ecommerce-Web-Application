@@ -1,14 +1,48 @@
 const express = require('express');
 const cors = require('cors');
 require("dotenv").config();
-
-const app = express();
-
-app.use(cors());
-app.use(express.json());
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const mongoSanitize = require('express-mongo-sanitize');
+const xssClean = require('xss-clean'); // lightweight sanitizer for body fields
+const compression = require('compression');
 
 //MongoDB connection
 const { connectDB } = require('./src/config/db');
+
+// Routers
+const authRoutes = require('./src/routes/authRoutes');
+
+const app = express();
+
+// ---- Security & hardening ----
+app.use(helmet({
+  crossOriginEmbedderPolicy: false, // prevent issues with fonts/images during dev
+}));
+app.use(compression());
+app.use(express.json({ limit: '16kb' })); // small body limit
+app.use(express.urlencoded({ extended: true, limit: '16kb' }));
+
+// Sanitize request data to prevent NoSQL injection & XSS payloads
+app.use(mongoSanitize());
+app.use(xssClean());
+
+// Strict CORS: only allow your frontend origin
+const allowedOrigin = process.env.FRONTEND_URL || 'https://localhost:3000';
+app.use(cors({
+  origin: allowedOrigin,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+}));
+
+// Basic rate limiting (tune as needed)
+app.use(rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200, // 200 requests / 15 min / IP
+  standardHeaders: true,
+  legacyHeaders: false,
+}));
 
 // ---- DB Connection ----
 connectDB().catch((err) => {
@@ -16,6 +50,10 @@ connectDB().catch((err) => {
   console.error('Mongo connection failed:', err);
   process.exit(1);
 });
+
+// ---- Routes ----
+// NOTE: All protected endpoints apply Auth0 JWT check inside route files.
+app.use('/api/auth', authRoutes);
 
 // Start server
 const PORT = process.env.PORT || 4000;
